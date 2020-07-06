@@ -1,0 +1,89 @@
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  font-size: 16px;
+}
+
+body {
+  font-family: helvetica, arial, sans-serif;
+  margin: 1em;
+  background: url(bg.svg);
+  background-position: top center;
+  line-height: 1.4;
+}
+
+h1, h2, h3 {
+  color: #004;
+  font-family: 'Calistoga', sans-serif;
+  font-weight: 400;
+}
+
+h1 { font-size: 2.74rem }
+h2 { font-size: 1.96rem }
+h3 { font-size: 1.4rem }
+
+.layout {
+  max-width: 500px;
+  margin: 2em auto;
+}
+
+
+/* header */
+
+header {
+  text-align: center;
+  margin-bottom: 3em;
+  overflow: hidden;
+  max-width: 700px;
+  position: relative;
+  margin: 0 auto;
+}
+
+.glitchButton {
+  z-index: 2;
+}
+.glitchButtonElement {
+  transform: scaleY(.8) rotate(-26.565deg) scale(1.2);
+}
+.glitchButtonElement img {
+  filter: drop-shadow(-4px 8px 4px rgba(0,0,0,.5));
+}
+.glitchOpenWindowElement {
+  transform: translateY(8px);
+}
+
+.logo {
+  display: inline-block;
+  color: #fff;
+  transform: scaleY(.8) rotate(-26.565deg);
+  font-family: 'Calistoga', sans-serif;
+  font-size: calc(56px + 4vw);
+  text-shadow:
+    0 1px #444,
+    0 -1px #444,
+    1px 0 #444,
+    -1px 0 #444,    
+    -.04em .08em hsl(0, 100%, 80%),
+    -.08em .16em hsl(140, 100%, 85%),
+    -.12em .24em hsl(220, 100%, 70%),
+    -.12em .24em .3em rgba(0, 0, 0, .5);
+  padding: 0 0 .5em;
+}
+
+
+/* docs layout */
+
+@media screen and (min-width: 700px) {
+  
+}
+.docs {
+  grid-template-columns: 1fr 200px;  
+}
+.docs > * {
+  grid-column: 1;
+}
+.docs > aside {
+  grid-column: 2;
+}
