@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 80" width="75" height="60">
+  <g fill="#f2f2f2">
+    <path d="M20,0 L30,16 10,24 0,8" transform="translate(40,-16)"/>
+    <path d="M20,0 L30,16 10,24 0,8" transform="translate(70,-8)"/>
+
+    <path d="M20,0 L30,16 10,24 0,8"/>
+    <path d="M20,0 L30,16 10,24 0,8" transform="translate(30,8)"/>
+    <path d="M20,0 L30,16 10,24 0,8" transform="translate(60,16)"/>
+    <path d="M20,0 L30,16 10,24 0,8" transform="translate(90,24)"/>
+
+    <path d="M20,0 L30,16 10,24 0,8" transform="translate(-10,24)"/>
+    <path d="M20,0 L30,16 10,24 0,8" transform="translate(20,32)"/>
+    <path d="M20,0 L30,16 10,24 0,8" transform="translate(50,40)"/>
+    <path d="M20,0 L30,16 10,24 0,8" transform="translate(80,48)"/>
+
+    <path d="M20,0 L30,16 10,24 0,8" transform="translate(-20,48)"/>
+    <path d="M20,0 L30,16 10,24 0,8" transform="translate(10,56)"/>
+    <path d="M20,0 L30,16 10,24 0,8" transform="translate(40,64)"/>
+    <path d="M20,0 L30,16 10,24 0,8" transform="translate(70,72)"/>
+  </g>
+</svg>

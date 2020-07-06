@@ -1,0 +1,142 @@
+/* CSS files add styling rules to your content */
+
+:root {
+  font-size: 16px;
+}
+
+body {
+  font-family: helvetica, arial, sans-serif;
+  margin: 1em;
+  background: url(bg.svg);
+  background-position: top center;
+}
+
+h1, h2, h3 {
+  color: #004;
+  font-family: 'Calistoga', sans-serif;
+  font-weight: 400;
+}
+
+h1 { font-size: 2.74rem }
+h2 { font-size: 1.96rem }
+h3 { font-size: 1.4rem }
+
+label {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  flex: 1;
+}
+
+label input {
+  margin-left: .5em;
+}
+
+label input[type="range"] {
+  flex: 1;
+}
+
+input[type="file"] {
+  display: none;
+}
+
+canvas {
+  max-width: 100%;
+  display: block;
+  margin: auto;
+}
+
+header {
+  text-align: center;
+  margin-bottom: 4em;
+  overflow: hidden;
+  max-width: 700px;
+  position: relative;
+  margin: 0 auto;
+}
+
+section {
+  background: #fff;
+  margin: 2em auto;
+  padding: 2em 1em;
+  border-radius: 1em;
+  border: .5px solid #444;
+  box-shadow: 0 .5em 1em rgba(0,0,0,.5);
+  max-width: 600px;
+}
+section h2 {
+  margin: 0;
+}
+section > * {
+  margin: 0;
+}
+section > * + * {
+  margin-top: 1em;
+}
+
+button {
+  font: inherit;
+  font-size: smaller;
+  padding: .5em 1em;
+  line-height: inherit;
+  border: 2px solid #444;
+  border-radius: .25rem;
+  background: #fff;
+}
+button:hover {
+  background: #ddd;
+  cursor: pointer;
+}
+
+pre {
+  padding: 1em;
+  background: #eee;
+  overflow: auto;
+  font-size: .8em; Lo
+}
+
+#output {
+  background: url(bg.svg);
+  border: 2px solid #888;
+  text-align: center;
+}
+
+.glitchButton {
+  z-index: 2;
+}
+.glitchButtonElement {
+  transform: scaleY(.8) rotate(-26.565deg) scale(1.2);
+}
+.glitchButtonElement img {
+  filter: drop-shadow(-4px 8px 4px rgba(0,0,0,.5));
+}
+.glitchOpenWindowElement {
+  transform: translateY(8px);
+}
+
+.logo {
+  display: inline-block;
+  color: #fff;
+  transform: scaleY(.8) rotate(-26.565deg);
+  font-family: 'Calistoga', sans-serif;
+  font-size: calc(56px + 4vw);
+  text-shadow:
+    0 1px #444,
+    0 -1px #444,
+    1px 0 #444,
+    -1px 0 #444,    
+    -.04em .08em hsl(0, 100%, 80%),
+    -.08em .16em hsl(140, 100%, 85%),
+    -.12em .24em hsl(220, 100%, 70%),
+    -.12em .24em .3em rgba(0, 0, 0, .5);
+  padding: .5em 0 1em;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0 -1em;
+}
+.controls > * {
+  margin: .5em 1em;
+}

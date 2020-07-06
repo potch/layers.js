@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Layers.js - An Experimental Canvas Library</title>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <link href="https://fonts.googleapis.com/css?family=Calistoga&display=swap" rel="stylesheet"> 
+    <!-- import the webpage's stylesheet -->
+    <link rel="stylesheet" href="/site/style.css" />
+
+    <!-- import the webpage's javascript file -->
+    <script type="module" src="/site/demo.js" defer></script>
+  </head>
+  <body>
+    <header>
+      <div class="glitchButton position-x-right position-y-bottom" style="position:absolute; top:1em; left:1em;"></div>
+      <script src="https://button.glitch.me/button.js"></script>
+      <h1><span class="logo">Layers.js</span></h1>
+
+      <h2>
+        <em>❧ Work in Progress ❧ Alpha Quality! ❧</em>
+      </h2>
+      
+      <h3>
+        use &lt;canvas&gt; like you work in a photo shop
+      </h3>
+    </header>
+    
+    <section class="demo" id="#demo">
+      <h2>
+        Demo
+      </h2>
+      <div class="controls">
+        <button id="upload">
+          📸 Choose a Photo
+        </button>
+        <input type="file" accept="image/jpeg,image/png" id="image" />
+        <label>
+          Contrast
+          <input id="curves" type="range" min="-1" max="1" step=".01" value="0" />
+        </label>
+      </div>
+      <div class="controls">
+        <label>
+          Highlights
+          <input type="color" id="highlights" value="#ffcc00">
+        </label>
+        <label>
+          Shadows
+          <input type="color" id="shadows" value="#004488">
+        </label>
+        <label>
+          Mask
+          <input type="checkbox" checked id="mask">
+        </label>
+        <label>
+          Distort
+          <input type="checkbox" checked id="displace">
+        </label>
+      </div>
+      <div id="output">
+
+      </div>
+
+      <div class="controls">
+        <a href="#" id="download" download="avatar.png">⬇️ Download</a>
+      </div>
+    </section>
+    
+    <section class="code">
+      <h2>
+        Code
+      </h2>
+      <pre>let avatar = new Layers.Stack({
+  width: 400,
+  height: 400,
+  layers: [
+    {
+      name: 'mask',
+      mode: 'destination-in',
+      image: {
+        url: "mask.png",
+        size: "contain"
+      }
+    },
+    {
+      name: "shadows",
+      mode: "screen",
+      fill: "#004488"
+    },
+    {
+      name: "highlights",
+      mode: "multiply",
+      fill: "#ffcc00"
+    },
+    {
+      name: "curves",
+      filter: Layers.filters.CurvesFilter,
+      filterOptions: {
+        amount: 0
+      }
+    },
+    {
+      filter: Layers.filters.GrayscaleFilter
+    },
+    {
+      name: "image",
+      image: {
+        size: "cover"
+      }
+    },
+    {
+      fill: "#ffffff"
+    }
+  ]
+});
+</pre>
+    </section>
+       
+  </body>
+</html>
