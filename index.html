@@ -53,6 +53,10 @@
         </label>
       </div>
       <div class="controls">
+        <label class="controls--flex">
+          Caption
+          <input type="text" id="caption" value="Hello, World!" />
+        </label>
         <label>
           Highlights
           <input type="color" id="highlights" value="#ffcc00" />
@@ -75,51 +79,7 @@
 
     <section class="code">
       <h2>Code</h2>
-      <pre>
-let avatar = new Layers.Stack({
-  width: 400,
-  height: 400,
-  layers: [
-    {
-      name: 'mask',
-      mode: 'destination-in',
-      image: {
-        url: "mask.png",
-        size: "contain"
-      }
-    },
-    {
-      name: "shadows",
-      mode: "screen",
-      fill: "#004488"
-    },
-    {
-      name: "highlights",
-      mode: "multiply",
-      fill: "#ffcc00"
-    },
-    {
-      name: "curves",
-      filter: Layers.filters.CurvesFilter,
-      filterOptions: {
-        amount: 0
-      }
-    },
-    {
-      filter: Layers.filters.GrayscaleFilter
-    },
-    {
-      name: "image",
-      image: {
-        size: "cover"
-      }
-    },
-    {
-      fill: "#ffffff"
-    }
-  ]
-});</pre
-      >
+      <pre></pre>
     </section>
     <footer>
       🦒 made by

@@ -10,6 +10,7 @@ let avatar = {
   height: 400,
   layers: [
     {
+      name: "caption",
       text: {
         text: "Hello, World!",
         font: {
@@ -80,6 +81,7 @@ function update() {
 }
 
 window.onload = () => {
+  demo.layer("caption").text.text = $("#caption").value;
   demo.layer("highlights").fill = $("#highlights").value;
   demo.layer("shadows").fill = $("#shadows").value;
   demo.layer("curves").filterOptions.amount = parseFloat($("#curves").value);
@@ -112,6 +114,16 @@ $("#mask").addEventListener("change", e => {
 
 $("#image").addEventListener("change", e => {
   demo.layer("image").image.url = URL.createObjectURL(e.target.files[0]);
+  update();
+});
+
+$("#caption").addEventListener("change", e => {
+  demo.layer("caption").text.text = e.target.value;
+  update();
+});
+
+$("#caption").addEventListener("input", e => {
+  demo.layer("caption").text.text = e.target.value;
   update();
 });
 
