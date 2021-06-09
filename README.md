@@ -32,4 +32,4 @@ TK
 
 ## Documentation
 
-See [API.md](API Documentation)
+See [API Documentation](https://github.com/potch/layers.js/blob/main/API.md)
