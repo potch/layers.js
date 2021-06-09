@@ -60,9 +60,6 @@ let avatar = {
         url: "site/cat.png",
         size: "cover",
       },
-      transform: {
-        rotate: 45,
-      },
     },
     {
       fill: "#fff",
