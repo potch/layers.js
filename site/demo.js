@@ -1,5 +1,5 @@
-import { render, Stack } from "/index.js";
-import * as Layers from "/index.js";
+import { render, Stack } from "../index.js";
+import * as Layers from "../index.js";
 
 window.Layers = Layers;
 
