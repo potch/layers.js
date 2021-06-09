@@ -8,10 +8,14 @@ const canvas = render({
   height: 200,
   layers: [
     {
-      text: "Hello, World!",
-      position: { y: "90%" },
-      color: "white",
-      stroke: "black",
+      text: {
+        text: "Hello, World!",
+        position: { y: "90%" },
+        font: { size: "50px" },
+        color: "white",
+        stroke: "black",
+        strokeWidth: 4,
+      },
     },
     {
       name: "image",
