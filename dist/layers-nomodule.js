@@ -1,12 +1,17 @@
 var Layers = (function (exports) {
   'use strict';
 
+  // helpers
   const isDef = o => typeof o !== "undefined";
   const PERCENT_RE = /^(\d+(\.\d+)?)%$/;
   const percent = string => parseFloat(string.match(PERCENT_RE)[1]) / 100;
+
+  // internal state
   const registeredFilters = new Map();
   const imageCache = new Map();
 
+  // we can't assume that a runtime environment has the DOM/canvas
+  // so we can swap out for other canvas implementations
   const DOMCanvasEngine = {
     createCanvas(width, height) {
       let canvas = document.createElement("canvas");
@@ -33,6 +38,11 @@ var Layers = (function (exports) {
 
   let canvasEngine = DOMCanvasEngine;
 
+  function useCanvasEngine(engine) {
+    canvasEngine = engine;
+  }
+
+  // Functions for calculating placements of layer content
   // simple primitive used for layout
   const rect = ({ x = 0, y = 0, width, height, x2, y2 }) => {
     if (!isDef(width) && isDef(x2)) {
@@ -95,6 +105,7 @@ var Layers = (function (exports) {
         }
       }
     }
+    // TODO support string positions like "top right" or "60% 40px"
     if (position) {
       if (position.x) {
         let pos = position.x;
@@ -133,13 +144,16 @@ var Layers = (function (exports) {
     };
   }
 
+  // the main rendering function
+  // takes a "stack", consisting of { width, height, layers: [] }
+  // optionally takes a canvas and a dom container to place it in
+  // returns a canvas
   async function render(stack, { canvas, container } = {}) {
     if (stack instanceof Stack) {
       stack = stack.stack;
     }
     const { width: WIDTH, height: HEIGHT, layers } = stack;
     if (!canvas) {
-      console.log("generating new canvas");
       canvas = canvasEngine.createCanvas(WIDTH, HEIGHT);
     }
     if (container) {
@@ -150,25 +164,28 @@ var Layers = (function (exports) {
         containerEl = document.querySelector(container);
       }
       if (containerEl && canvas.parentNode !== containerEl) {
-        console.log("mounting", canvas, container);
         containerEl.append(canvas);
       }
     }
 
+    // avoid resizing canvas if unneccesary
     if (canvas.width !== WIDTH) canvas.width = WIDTH;
     if (canvas.height !== HEIGHT) canvas.height = HEIGHT;
     let canvasRect = rect({ width: WIDTH, height: HEIGHT });
 
     let ctx = canvas.getContext("2d");
     ctx.clearRect(0, 0, WIDTH, HEIGHT);
+    // render layers from bottom to top
     for (let i = layers.length - 1; i >= 0; i--) {
       let layer = layers[i];
       if (layer.disabled) continue;
 
+      // save transforms and styles
       ctx.save();
       ctx.globalCompositeOperation = layer.mode || "source-over";
       ctx.globalAlpha = layer.opacity || 1;
 
+      // layer transforms
       if (layer.transform) {
         if (layer.transform.x || layer.transform.y) {
           ctx.translate(layer.transform.x || 0, layer.transform.y || 0);
@@ -181,6 +198,7 @@ var Layers = (function (exports) {
       }
 
       if (layer.image) {
+        // optionally accept an Image object as source
         let image = layer.image.source;
         if (layer.image.url) {
           try {
@@ -190,11 +208,13 @@ var Layers = (function (exports) {
           }
         }
         if (image) {
+          // Image layer
           let anchor = layer.image.anchor;
           let position = layer.image.position;
           let size = layer.image.size;
           let iWidth = image.width;
           let iHeight = image.height;
+          // compute rendered image size
           if (size.width) {
             iWidth = size.width;
             if (!size.height) {
@@ -223,6 +243,7 @@ var Layers = (function (exports) {
             iWidth = (image.width / scale) * pct;
             iHeight = (image.height / scale) * pct;
           }
+          // generate placement
           let placement = placeRect(
             {
               width: iWidth,
@@ -235,6 +256,7 @@ var Layers = (function (exports) {
           ctx.drawImage(image, placement.x, placement.y, iWidth, iHeight);
         }
       } else if (layer.filter) {
+        // Filter layer
         let filter;
         if (
           typeof layer.filter === "string" &&
@@ -255,6 +277,7 @@ var Layers = (function (exports) {
           console.warn(`failed to apply unknown filter "${layer.filter}"`);
         }
       } else if (layer.group) {
+        // Layer group
         let group = await render({
           width: WIDTH,
           height: HEIGHT,
@@ -262,28 +285,27 @@ var Layers = (function (exports) {
         });
         ctx.drawImage(group, 0, 0);
       } else if (layer.text) {
-        let font = layer.font || {};
+        // Text layer
+        let text = layer.text;
+        let font = text.font || {};
         let family = font.family || "sans-serif";
         let size = font.size || "12px";
         let weight = font.weight || "normal";
-        ctx.fillStyle = layer.color || "#000";
-        ctx.strokeStyle = layer.stroke || "#000";
-        ctx.lineWidth = layer.strokeWidth || 1;
+        ctx.fillStyle = text.color || "#000";
+        ctx.strokeStyle = text.stroke || "#000";
+        ctx.lineWidth = text.strokeWidth || 1;
         ctx.font = `${weight} ${size} ${family}`;
-        ctx.textAlign = font.align || "center";
-        ctx.textBaseline = font.verticalAlign || "middle";
-        let position = layer.position;
-        let placement = placeRect(
-          { width: 0, height: 0 },
-          { WIDTH, HEIGHT },
-          position
-        );
-        if ("stroke" in layer) {
+        ctx.textAlign = text.align || "center";
+        ctx.textBaseline = text.verticalAlign || "middle";
+        let position = text.position;
+        let placement = placeRect({ width: 0, height: 0 }, canvasRect, position);
+        if ("stroke" in text) {
           ctx.lineJoin = "round";
-          ctx.strokeText(layer.text, placement.x, placement.y);
+          ctx.strokeText(text.text, placement.x, placement.y);
         }
-        ctx.fillText(layer.text, placement.x, placement.y);
+        ctx.fillText(text.text, placement.x, placement.y);
       } else if (layer.shape) {
+        // Shape layer
         let shape = layer.shape;
         let anchor = shape.anchor;
         let position = shape.position;
@@ -320,10 +342,11 @@ var Layers = (function (exports) {
           position,
           anchor
         );
-        ctx.fillStyle = layer.fill;
-        ctx.strokeStyle = layer.stroke;
+        ctx.fillStyle = shape.color;
+        ctx.strokeStyle = shape.stroke;
         let type = shape.type;
         if (type === "ellipse") {
+          // ellipse/circle
           ctx.beginPath();
           ctx.ellipse(
             placement.x + width / 2,
@@ -336,9 +359,11 @@ var Layers = (function (exports) {
           );
           ctx.fill();
         } else {
+          // default is rectangle
           ctx.fillRect(placement.x, placement.y, width, height);
         }
       } else if (layer.fill) {
+        // Basic fill layer
         ctx.fillStyle = layer.fill;
         ctx.fillRect(0, 0, WIDTH, HEIGHT);
       }
@@ -348,6 +373,7 @@ var Layers = (function (exports) {
     return canvas;
   }
 
+  // helper class for interactive layer stacks
   class Stack {
     constructor(stack, { canvas, container } = {}) {
       this.stack = stack || {
@@ -376,34 +402,39 @@ var Layers = (function (exports) {
   }
 
   /* filters */
-  function registerFilter$1(name, filter) {
+  function registerFilter(name, filter) {
     registeredFilters.set(name, filter);
   }
 
+  // interpolation
   const lerp = (a, b, i) => a + i * (b - a);
+  // color interpolation
   const clerp = (a, b, i) => [
     lerp(a[0], b[0], i),
     lerp(a[1], b[1], i),
     lerp(a[2], b[2], i),
-    lerp(a[3], b[3], i)
+    lerp(a[3], b[3], i),
   ];
 
+  // get pixel value at x/y of imagedata
   function getPixel(id, x, y) {
-    if (x < 0 || y < 0 || x >= id.width || y >= id.height) {    
-      return [0,0,0,0]
+    if (x < 0 || y < 0 || x >= id.width || y >= id.height) {
+      return [0, 0, 0, 0];
     }
     let i = (y * id.width + x) * 4;
     return id.data.slice(i, i + 4);
   }
 
+  // set pixel value at x/y of imagedata
   function setPixel(id, x, y, r, g, b, a) {
     let i = (y * id.width + x) * 4;
     id.data[i] = r;
-    id.data[i+1] = g;
-    id.data[i+2] = b;
-    id.data[i+3] = a;
+    id.data[i + 1] = g;
+    id.data[i + 2] = b;
+    id.data[i + 3] = a;
   }
 
+  // implementation of the "painter's algorithm" aka "source-over" blending
   const paint = (src, dest) => {
     let a1 = src[3] / 255;
     let a2 = dest[3] / 255;
@@ -411,10 +442,11 @@ var Layers = (function (exports) {
       src[0] * a1 + dest[0] * a2 * (1 - a1),
       src[1] * a1 + dest[1] * a2 * (1 - a1),
       src[2] * a1 + dest[2] * a2 * (1 - a1),
-      (a1 + a2 * (1 - a1)) * 255
+      (a1 + a2 * (1 - a1)) * 255,
     ];
   };
 
+  // calculates color "between" pixels using bilinear interpolation
   function samplePixel(id, x, y) {
     let x1 = Math.floor(x);
     let x2 = Math.ceil(x);
@@ -430,29 +462,20 @@ var Layers = (function (exports) {
     );
   }
 
-  const bezier3 = (a, b, c, t) => lerp(
-    lerp(a, b, t),
-    lerp(b, c, t),
-    t
-  );
+  const bezier3 = (a, b, c, t) => lerp(lerp(a, b, t), lerp(b, c, t), t);
 
-  const bezier4 = (a, b, c, d, t) => lerp(
-    bezier3(a, b, c, t),
-    bezier3(b, c, d, t),
-    t
-  );
+  const bezier4 = (a, b, c, d, t) =>
+    lerp(bezier3(a, b, c, t), bezier3(b, c, d, t), t);
 
   function bezier(x2, y2, x3, y3, t) {
-    return [
-      bezier4(0, x2, x3, 1, t),
-      bezier4(0, y2, y3, 1, t)
-    ];
+    return [bezier4(0, x2, x3, 1, t), bezier4(0, y2, y3, 1, t)];
   }
 
+  // converts bezier to cartesian space and finds y given x
   function bezierAlgebraic(x2, y2, x3, y3, x) {
     let t = 0.5;
     let step = 0.5;
-    const EPSILON = 1/512;
+    const EPSILON = 1 / 512;
     while (step > EPSILON) {
       let current = bezier(x2, y2, x3, y3, t)[0];
       let tplus = bezier(x2, y2, x3, y3, Math.min(t + step, 1))[0];
@@ -474,7 +497,7 @@ var Layers = (function (exports) {
     return bezier(x1, y1, x2, y2, bezierAlgebraic(x1, y1, x2, y2, x));
   }
 
-  var utils$1 = /*#__PURE__*/Object.freeze({
+  var utils = /*#__PURE__*/Object.freeze({
     __proto__: null,
     lerp: lerp,
     clerp: clerp,
@@ -489,6 +512,7 @@ var Layers = (function (exports) {
     bezierByX: bezierByX
   });
 
+  // converts to grayscale based on luminosity
   function GrayscaleFilter(imageData) {
     let data = imageData.data;
     for (let i = 0; i < data.length; i = i + 4) {
@@ -502,6 +526,7 @@ var Layers = (function (exports) {
     return imageData;
   }
 
+  // takes color values and scales them from midpoint
   function ContrastFilter(imageData, { amount }) {
     let data = imageData.data;
     for (let i = 0; i < data.length; i = i + 4) {
@@ -512,6 +537,7 @@ var Layers = (function (exports) {
     return imageData;
   }
 
+  // applies a bezier curve to component
   function CurvesFilter(imageData, { x1, y1, x2, y2, amount }) {
     let data = imageData.data;
 
@@ -525,7 +551,7 @@ var Layers = (function (exports) {
     const memo = {};
     const curve = v => {
       if (!(v in memo)) {
-        memo[v] = utils.bezierByX(x1, y1, x2, y2, v / 255)[1] * 255;
+        memo[v] = bezierByX(x1, y1, x2, y2, v / 255)[1] * 255;
       }
       return memo[v];
     };
@@ -571,7 +597,7 @@ var Layers = (function (exports) {
     return id;
   }
 
-  var filters = /*#__PURE__*/Object.freeze({
+  var _filters = /*#__PURE__*/Object.freeze({
     __proto__: null,
     GrayscaleFilter: GrayscaleFilter,
     ContrastFilter: ContrastFilter,
@@ -580,17 +606,21 @@ var Layers = (function (exports) {
     ProjectionFilter: ProjectionFilter
   });
 
-  registerFilter("grayscale", filter.GrayscaleFilter);
-  registerFilter("displacment", filter.DisplacementFilter);
-  registerFilter("contrast", filter.ContrastFilter);
-  registerFilter("curves", filter.CurvesFilter);
-  registerFilter("projection", filter.ProjectionFilter);
+  registerFilter("grayscale", GrayscaleFilter);
+  registerFilter("displacment", DisplacementFilter);
+  registerFilter("contrast", ContrastFilter);
+  registerFilter("curves", CurvesFilter);
+  registerFilter("projection", ProjectionFilter);
 
+  const filters = _filters;
+
+  exports.DOMCanvasEngine = DOMCanvasEngine;
   exports.Stack = Stack;
   exports.filters = filters;
-  exports.registerFilter = registerFilter$1;
+  exports.registerFilter = registerFilter;
   exports.render = render;
-  exports.utils = utils$1;
+  exports.useCanvasEngine = useCanvasEngine;
+  exports.utils = utils;
 
   Object.defineProperty(exports, '__esModule', { value: true });
 

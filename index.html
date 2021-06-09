@@ -6,7 +6,10 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <link href="https://fonts.googleapis.com/css?family=Calistoga&display=swap" rel="stylesheet"> 
+    <link
+      href="https://fonts.googleapis.com/css?family=Calistoga&display=swap"
+      rel="stylesheet"
+    />
     <!-- import the webpage's stylesheet -->
     <link rel="stylesheet" href="/site/style.css" />
 
@@ -15,65 +18,53 @@
   </head>
   <body>
     <header>
-      <div class="glitchButton position-x-right position-y-bottom" style="position:absolute; top:1em; left:1em;"></div>
-      <script src="https://button.glitch.me/button.js"></script>
       <h1><span class="logo">Layers.js</span></h1>
 
-      <h2>
-        <em>❧ Work in Progress ❧ Alpha Quality! ❧</em>
-      </h2>
-      
-      <h3>
-        use &lt;canvas&gt; like you work in a photo shop
-      </h3>
+      <h2>use &lt;canvas&gt; like you work in a photo shop</h2>
     </header>
-    
+
     <section class="demo" id="#demo">
-      <h2>
-        Demo
-      </h2>
+      <h2>Demo</h2>
       <div class="controls">
-        <button id="upload">
-          📸 Choose a Photo
-        </button>
+        <button id="upload">Choose a Photo&hellip;</button>
         <input type="file" accept="image/jpeg,image/png" id="image" />
-        <label>
+        <label class="controls--flex">
           Contrast
-          <input id="curves" type="range" min="-1" max="1" step=".01" value="0" />
+          <input
+            id="curves"
+            type="range"
+            min="-1"
+            max="1"
+            step=".01"
+            value="0"
+          />
         </label>
       </div>
       <div class="controls">
         <label>
           Highlights
-          <input type="color" id="highlights" value="#ffcc00">
+          <input type="color" id="highlights" value="#ffcc00" />
         </label>
         <label>
           Shadows
-          <input type="color" id="shadows" value="#004488">
+          <input type="color" id="shadows" value="#004488" />
         </label>
         <label>
           Mask
-          <input type="checkbox" checked id="mask">
-        </label>
-        <label>
-          Distort
-          <input type="checkbox" checked id="displace">
+          <input type="checkbox" checked id="mask" />
         </label>
       </div>
-      <div id="output">
-
-      </div>
+      <div id="output"></div>
 
       <div class="controls">
         <a href="#" id="download" download="avatar.png">⬇️ Download</a>
       </div>
     </section>
-    
+
     <section class="code">
-      <h2>
-        Code
-      </h2>
-      <pre>let avatar = new Layers.Stack({
+      <h2>Code</h2>
+      <pre>
+let avatar = new Layers.Stack({
   width: 400,
   height: 400,
   layers: [
@@ -116,8 +107,8 @@
     }
   ]
 });
-</pre>
+</pre
+      >
     </section>
-       
   </body>
 </html>
