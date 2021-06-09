@@ -161,3 +161,9 @@ canvas {
 .controls--flex {
   flex: 1;
 }
+
+footer {
+  max-width: 600px;
+  margin: 2em auto;
+  text-align: center;
+}
