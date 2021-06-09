@@ -28,7 +28,11 @@ Layers are drawn from the bottom up, over top of each other using effects like o
 
 ## Installation
 
-TK
+`npm i @potch/layers`
+
+## Usage
+
+_work in progress!_
 
 ## Documentation
 
