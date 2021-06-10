@@ -1,6 +1,0 @@
-{
-  "restart": {
-    "exclude": ["^site/"]
-  },
-  "throttle": 5000
-}
