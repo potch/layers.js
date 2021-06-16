@@ -35,36 +35,6 @@ let avatar = {
       },
     },
     {
-      group: [
-        {
-          name: "mask",
-          mode: "destination-out",
-          shape: {
-            type: "ellipse",
-            width: "90%",
-            height: "900%",
-          },
-        },
-        {
-          fill: {
-            gradient: {
-              start: { x: "85%", y: "25%" },
-              end: { x: "15%", y: "75%" },
-              colors: [
-                "red",
-                "orange",
-                "yellow",
-                "green",
-                "blue",
-                "indigo",
-                "purple",
-              ],
-            },
-          },
-        },
-      ],
-    },
-    {
       name: "shadows",
       mode: "screen",
       fill: "#004488",
