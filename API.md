@@ -33,7 +33,7 @@ An `Object` describing the contents of a layer.
   - `y`: `Number` amount to translate the layer vertically in pixels.
   - `rotate`: `Number` amount to rotate the layer clockwise in degrees.
 - `mode`: `String` the blending mode used when drawing this layer. See [Canvas globalCompositeOperation on MDN](https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/globalCompositeOperation) for supported values.
-- `opacity`: `Number` opacity of the layer, from 0 to 1.
+- `opacity`: `Number` opacity of the layer, from `0` to `1`.
 
 #### Image Layer
 
@@ -49,8 +49,8 @@ An `Object` describing the contents of a layer.
       - `width`: `Number` width of image in pixels.
       - `height`: `Number` height of image in pixels.
       - if `width` is provided without height (or vice versa) the other value will be computed based on the aspect ratio of the image.
-  - `anchor`: `<Placement>` describing the anchor point of the image. defaults to "center".
-  - `position`: `<Placement>` describing the position of the anchor point within the layer. defaults to "center".
+  - `anchor`: [`<Placement>`](#placement) describing the anchor point of the image. defaults to "center".
+  - `position`: [`<Placement>`](#placement) describing the position of the anchor point within the layer. defaults to "center".
 
 #### Text Layer
 
@@ -65,7 +65,7 @@ An `Object` describing the contents of a layer.
   - `color`: `String` fill color of text.
   - `stroke`: `String` stroke color of text. If not provided, no stroke will be drawn around the text.
   - `strokeWidth`: `Number` width of text stroke, in pixels.
-  - `position`: `<Placement>` describing the position of the text within the layer.
+  - `position`: [`<Placement>`](#placement) describing the position of the text within the layer.
 
 #### Shape Layer
 
@@ -75,14 +75,14 @@ An `Object` describing the contents of a layer.
   - `stroke`: `String` color to use when drawing a stroke around the shape. If not provided, no stroke will be drawn.
   - `width`: `<Percent>` | `Number` width of shape. `<Percent>` is a string like `"45%"` representing the percentage of the canvas width. As a `Number`, width in pixels.
   - `height`: `<Percent>` | `Number` width of shape. `<Percent>` is a string like `"45%"` representing the percentage of the canvas height. As a `Number`, height in pixels.
-  - `anchor`: `<Placement>` describing the anchor point of the image. defaults to "center".
-  - `position`: `<Placement>` describing the position of the anchor point within the layer. defaults to "center".
+  - `anchor`: [`<Placement>`](#placement) describing the anchor point of the image. defaults to "center".
+  - `position`: [`<Placement>`](#placement) describing the position of the anchor point within the layer. defaults to "center".
 
 #### Fill Layer
 
 Fill the canvas with a color.
 
-- `fill`: `String` color to fill the canvas with.
+- `fill`: `String` | `<Gradient>` color to fill the canvas with.
 
 #### Filter Layer
 
@@ -92,6 +92,40 @@ Filter layers apply a per-pixel transformation to the current canvas data.
   - As a `String`, the name of a registered filter to apply. See [registerFilter](#registerFilter) for details.
   - As a function, the filter function to apply. See [Filters](#filters) for details.
 - `filterOptions`: `Object` arguments to pass to the filter.
+
+### `<Gradient>`
+
+Description of a gradient fill.
+
+- `start`: [`<Placement>`](#placement) starting position of the gradient
+- `end`: [`<Placement>`](#placement) ending position of the gradient
+- `colors`: `Array` of color stops for the gradient. Each color stop can be either a `String` of a color or an `Array` of `[position, color]`:
+  - `position`: `Number` from `0` to `1` indication the position along the gradient.
+  - `color`: `String` of the color at that position.
+
+If only strings are provided colors will be evenly spaced along the gradient. E.g. `colors: ["#fff", "red", "#000"]` is equivalent to:
+
+```
+colors: [
+  [0, "#fff"],
+  [.5, "red"],
+  [1, "#000"]
+]
+```
+
+### `<Placement>`
+
+Description of a point on the canvas. Placements can be described absolutely, or using shorthand keywords:
+
+- `{x, y}`
+  - `Number` for the position in pixels
+  - `String` for position in percentage of width/height of canvas e.g. `"40%"`
+  - position keywords
+	  - `left` | `center` | `right` for x position
+	  - `top` | `center` | `bottom` for y position
+  - if either `x` or `y` is not provided, defaults to `center`
+- `center`, which is short for `{x: "center", y: "center"}`
+
 
 ### Stack
 

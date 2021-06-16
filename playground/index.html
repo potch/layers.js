@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Playground - Layers.js - A Javascript Canvas Library</title>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <link
+      href="https://fonts.googleapis.com/css?family=Calistoga&display=swap"
+      rel="stylesheet"
+    />
+    <!-- import the webpage's stylesheet -->
+    <link rel="stylesheet" href="../site/style.css" />
+    <link
+      rel="stylesheet"
+      href="//unpkg.com/codemirror@5.61.1/lib/codemirror.css"
+    />
+    <link
+      rel="stylesheet"
+      href="//unpkg.com/codemirror@5.61.1/theme/monokai.css"
+    />
+
+    <!-- import the webpage's javascript file -->
+    <script src="//unpkg.com/codemirror@5.61.1/lib/codemirror.js"></script>
+    <script src="//unpkg.com/codemirror@5.61.1/mode/javascript/javascript.js"></script>
+
+    <script type="module" src="playground.js" defer></script>
+  </head>
+  <body>
+    <div class="playground">
+      <header>
+        <h1><a href="../" class="logo">Layers.js</a></h1>
+        <h2>playground</h2>
+        <nav>
+          <button class="reset">reset</button>
+        </nav>
+      </header>
+
+      <section class="editor">
+        <textarea id="code"></textarea>
+      </section>
+
+      <section class="preview">
+        <iframe id="runner"></iframe>
+      </section>
+    </div>
+    <script>
+      if (!window.location.pathname.endsWith("/")) {
+        window.location = window.location + "/";
+      }
+    </script>
+  </body>
+</html>

@@ -27,7 +27,10 @@ export const DOMCanvasEngine = {
         imageCache.set(url, i);
         resolve(i);
       };
-      i.onerror = () => reject();
+      i.onerror = () => {
+        console.warn("error loading image:", url);
+        reject();
+      };
       i.src = url;
     });
   },
@@ -141,6 +144,70 @@ function placeRect(a, b, position, anchor) {
   };
 }
 
+function parsePlacement(canvasRect, p) {
+  if (typeof p === "object") {
+    if (!("x" in p)) {
+      p.x = "center";
+    }
+    if (!("y" in p)) {
+      p.y = "center";
+    }
+    if (typeof p.y === "string") {
+      if (PERCENT_RE.test(p.y)) {
+        p.y = canvasRect.height * percent(p.y);
+      } else if (p.y === "top") {
+        p.y = 0;
+      } else if (p.y === "center") {
+        p.y = canvasRect.height / 2;
+      } else if (p.y === "bottom") {
+        p.y = canvasRect.height;
+      }
+    }
+    if (typeof p.x === "string") {
+      if (PERCENT_RE.test(p.x)) {
+        p.x = canvasRect.width * percent(p.x);
+      } else if (p.x === "top") {
+        p.x = 0;
+      } else if (p.x === "center") {
+        p.x = canvasRect.width / 2;
+      } else if (p.x === "bottom") {
+        p.x = canvasRect.width;
+      }
+    }
+    return p;
+  }
+  return {
+    x: canvasRect.width / 2,
+    y: canvasRect.height / 2,
+  };
+}
+
+function parseFill(ctx, canvasRect, fill) {
+  if (typeof fill === "string") return fill;
+  if (typeof fill === "object") {
+    if (fill.gradient) {
+      let { start, end, colors } = fill.gradient;
+      start = start
+        ? parsePlacement(canvasRect, start)
+        : { x: canvasRect.width / 2, y: 0 };
+      end = end
+        ? parsePlacement(canvasRect, end)
+        : { x: canvasRect.width / 2, y: canvasRect.height };
+      let gradient = ctx.createLinearGradient(start.x, start.y, end.x, end.y);
+      colors.forEach((stop, i) => {
+        let position = i / (colors.length - 1);
+        let color = stop;
+        if (stop instanceof Array) {
+          position = stop[0];
+          color = stop[1];
+        }
+        gradient.addColorStop(position, color);
+      });
+      return gradient;
+    }
+  }
+}
+
 // the main rendering function
 // takes a "stack", consisting of { width, height, layers: [] }
 // optionally takes a canvas and a dom container to place it in
@@ -195,84 +262,14 @@ export async function render(stack, { canvas, container } = {}) {
     }
 
     if (layer.image) {
-      // optionally accept an Image object as source
-      let image = layer.image.source;
-      if (layer.image.url) {
-        try {
-          image = await canvasEngine.loadImage(layer.image.url);
-        } catch (e) {
-          console.warn("Unable to load image " + layer.image.url, e);
-        }
-      }
-      if (image) {
-        // Image layer
-        let anchor = layer.image.anchor;
-        let position = layer.image.position;
-        let size = layer.image.size;
-        let iWidth = image.width;
-        let iHeight = image.height;
-        // compute rendered image size
-        if (size.width) {
-          iWidth = size.width;
-          if (!size.height) {
-            iHeight = (image.height / image.width) * iWidth;
-          }
-        }
-        if (size.height) {
-          iHeight = size.height;
-          if (!size.height) {
-            iWidth = (image.width / image.height) * iHeight;
-          }
-        }
-        if (size === "cover") {
-          let scale = Math.min(image.width / WIDTH, image.height / HEIGHT);
-          iWidth = image.width / scale;
-          iHeight = image.height / scale;
-        }
-        if (size === "contain") {
-          let scale = Math.max(image.width / WIDTH, image.height / HEIGHT);
-          iWidth = image.width / scale;
-          iHeight = image.height / scale;
-        }
-        if (typeof size === "string" && PERCENT_RE.test(size)) {
-          let pct = percent(size);
-          let scale = Math.max(image.width / WIDTH, image.height / HEIGHT);
-          iWidth = (image.width / scale) * pct;
-          iHeight = (image.height / scale) * pct;
-        }
-        // generate placement
-        let placement = placeRect(
-          {
-            width: iWidth,
-            height: iHeight,
-          },
-          canvasRect,
-          position,
-          anchor
-        );
-        ctx.drawImage(image, placement.x, placement.y, iWidth, iHeight);
-      }
+      await renderImageLayer(ctx, canvasRect, layer.image);
     } else if (layer.filter) {
-      // Filter layer
-      let filter;
-      if (
-        typeof layer.filter === "string" &&
-        registeredFilters.has(layer.filter)
-      ) {
-        filter = registeredFilters.get(layer.filter);
-      }
-      if (typeof layer.filter === "function") {
-        filter = layer.filter;
-      }
-      if (filter) {
-        let id = await filter(
-          ctx.getImageData(0, 0, WIDTH, HEIGHT),
-          layer.filterOptions
-        );
-        ctx.putImageData(id, 0, 0);
-      } else {
-        console.warn(`failed to apply unknown filter "${layer.filter}"`);
-      }
+      await renderFilterLayer(
+        ctx,
+        canvasRect,
+        layer.filter,
+        layer.filterOptions
+      );
     } else if (layer.group) {
       // Layer group
       let group = await render({
@@ -282,92 +279,185 @@ export async function render(stack, { canvas, container } = {}) {
       });
       ctx.drawImage(group, 0, 0);
     } else if (layer.text) {
-      // Text layer
-      let text = layer.text;
-      let font = text.font || {};
-      let family = font.family || "sans-serif";
-      let size = font.size || "12px";
-      let weight = font.weight || "normal";
-      ctx.fillStyle = text.color || "#000";
-      ctx.strokeStyle = text.stroke || "#000";
-      ctx.lineWidth = text.strokeWidth || 1;
-      ctx.font = `${weight} ${size} ${family}`;
-      ctx.textAlign = text.align || "center";
-      ctx.textBaseline = text.verticalAlign || "middle";
-      let position = text.position;
-      let placement = placeRect({ width: 0, height: 0 }, canvasRect, position);
-      if ("stroke" in text) {
-        ctx.lineJoin = "round";
-        ctx.strokeText(text.text, placement.x, placement.y);
-      }
-      ctx.fillText(text.text, placement.x, placement.y);
+      renderTextLayer(ctx, canvasRect, layer.text);
     } else if (layer.shape) {
-      // Shape layer
-      let shape = layer.shape;
-      let anchor = shape.anchor;
-      let position = shape.position;
-      let width = 0;
-      let height = 0;
-      if (shape.width) {
-        let w = shape.width;
-        if (typeof w === "string" && PERCENT_RE.test(w)) {
-          let pct = percent(w);
-          width = WIDTH * pct;
-        } else {
-          width = w;
-        }
-        if (!("height" in shape)) {
-          height = w;
-        }
-      }
-      if (shape.height) {
-        let h = shape.height;
-        if (typeof h === "string" && PERCENT_RE.test(h)) {
-          let pct = percent(h);
-          height = HEIGHT * pct;
-        } else {
-          height = h;
-        }
-        if (!("width" in shape)) {
-          width = h;
-        }
-      }
-
-      let placement = placeRect(
-        { width, height },
-        canvasRect,
-        position,
-        anchor
-      );
-      ctx.fillStyle = shape.color;
-      ctx.strokeStyle = shape.stroke;
-      let type = shape.type;
-      if (type === "ellipse") {
-        // ellipse/circle
-        ctx.beginPath();
-        ctx.ellipse(
-          placement.x + width / 2,
-          placement.y + height / 2,
-          width / 2,
-          height / 2,
-          0,
-          0,
-          Math.PI * 2
-        );
-        ctx.fill();
-      } else {
-        // default is rectangle
-        ctx.fillRect(placement.x, placement.y, width, height);
-      }
+      renderShapeLayer(ctx, canvasRect, layer.shape);
     } else if (layer.fill) {
       // Basic fill layer
-      ctx.fillStyle = layer.fill;
-      ctx.fillRect(0, 0, WIDTH, HEIGHT);
+      ctx.fillStyle = parseFill(ctx, canvasRect, layer.fill);
+      ctx.fillRect(
+        canvasRect.x,
+        canvasRect.y,
+        canvasRect.width,
+        canvasRect.height
+      );
     }
 
     ctx.restore();
   }
   return canvas;
+}
+
+async function renderImageLayer(
+  ctx,
+  canvasRect,
+  { source, url, anchor, position, size }
+) {
+  // optionally accept an Image object as source
+  let image = source;
+  if (!image && url) {
+    try {
+      image = await canvasEngine.loadImage(url);
+    } catch (e) {
+      console.warn("Unable to load image " + url, e);
+    }
+  }
+  if (!image) return;
+  let iWidth = image.width;
+  let iHeight = image.height;
+  // compute rendered image size
+  if (size.width) {
+    iWidth = size.width;
+    if (!size.height) {
+      iHeight = (image.height / image.width) * iWidth;
+    }
+  }
+  if (size.height) {
+    iHeight = size.height;
+    if (!size.height) {
+      iWidth = (image.width / image.height) * iHeight;
+    }
+  }
+  if (size === "cover") {
+    let scale = Math.min(
+      image.width / canvasRect.width,
+      image.height / canvasRect.height
+    );
+    iWidth = image.width / scale;
+    iHeight = image.height / scale;
+  }
+  if (size === "contain") {
+    let scale = Math.max(
+      image.width / canvasRect.width,
+      image.height / canvasRect.height
+    );
+    iWidth = image.width / scale;
+    iHeight = image.height / scale;
+  }
+  if (typeof size === "string" && PERCENT_RE.test(size)) {
+    let pct = percent(size);
+    let scale = Math.max(
+      image.width / canvasRect.width,
+      image.height / canvasRect.height
+    );
+    iWidth = (image.width / scale) * pct;
+    iHeight = (image.height / scale) * pct;
+  }
+  // generate placement
+  let placement = placeRect(
+    {
+      width: iWidth,
+      height: iHeight,
+    },
+    canvasRect,
+    position,
+    anchor
+  );
+  ctx.drawImage(image, placement.x, placement.y, iWidth, iHeight);
+}
+
+function renderTextLayer(
+  ctx,
+  canvasRect,
+  {
+    text,
+    font: { weight = "normal", size = "12px", family = "sans-serif" },
+    fill = "#000",
+    stroke = "#000",
+    strokeWidth = 1,
+    align = "center",
+    verticalAlign = "middle",
+    position,
+  }
+) {
+  ctx.fillStyle = parseFill(ctx, canvasRect, fill);
+  ctx.strokeStyle = stroke;
+  ctx.lineWidth = strokeWidth;
+  ctx.font = `${weight} ${size} ${family}`;
+  ctx.textAlign = align;
+  ctx.textBaseline = verticalAlign;
+  let placement = placeRect({ width: 0, height: 0 }, canvasRect, position);
+  if (stroke) {
+    ctx.lineJoin = "round";
+    ctx.strokeText(text, placement.x, placement.y);
+  }
+  ctx.fillText(text, placement.x, placement.y);
+}
+
+async function renderFilterLayer(ctx, canvasRect, filter, options) {
+  if (typeof filter === "string" && registeredFilters.has(filter)) {
+    filter = registeredFilters.get(filter);
+  } else if (typeof filter === "function") {
+    filter = filter;
+  } else {
+    console.warn(`failed to apply invalid filter "${filter}"`);
+    return;
+  }
+  if (filter) {
+    let id = await filter(
+      ctx.getImageData(0, 0, canvasRect.width, canvasRect.height),
+      options
+    );
+    ctx.putImageData(id, 0, 0);
+  } else {
+    console.warn(`failed to apply unknown filter "${layer.filter}"`);
+  }
+}
+
+function renderShapeLayer(
+  ctx,
+  canvasRect,
+  { anchor, position, type, width, height, fill = "#000", stroke }
+) {
+  if (width) {
+    if (typeof width === "string" && PERCENT_RE.test(width)) {
+      let pct = percent(width);
+      width = canvasRect.width * pct;
+    }
+    if (!height) {
+      height = width;
+    }
+  }
+  if (height) {
+    if (typeof height === "string" && PERCENT_RE.test(height)) {
+      let pct = percent(height);
+      height = canvasRect.height * pct;
+    }
+    if (!width) {
+      width = height;
+    }
+  }
+
+  let placement = placeRect({ width, height }, canvasRect, position, anchor);
+  ctx.fillStyle = parseFill(ctx, canvasRect, fill);
+  if (stroke) ctx.strokeStyle = stroke;
+  if (type === "ellipse") {
+    // ellipse/circle
+    ctx.beginPath();
+    ctx.ellipse(
+      placement.x + width / 2,
+      placement.y + height / 2,
+      width / 2,
+      height / 2,
+      0,
+      0,
+      Math.PI * 2
+    );
+    ctx.fill();
+  } else {
+    // default is rectangle
+    ctx.fillRect(placement.x, placement.y, width, height);
+  }
 }
 
 // helper class for interactive layer stacks

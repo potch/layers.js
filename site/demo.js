@@ -19,7 +19,7 @@ let avatar = {
           weight: 800,
         },
         position: { y: "90%" },
-        color: "white",
+        fill: "white",
         stroke: "black",
         strokeWidth: 8,
       },
@@ -29,10 +29,40 @@ let avatar = {
       mode: "destination-in",
       shape: {
         type: "ellipse",
-        color: "#000",
+        fill: "#000",
         width: "100%",
         height: "100%",
       },
+    },
+    {
+      group: [
+        {
+          name: "mask",
+          mode: "destination-out",
+          shape: {
+            type: "ellipse",
+            width: "90%",
+            height: "900%",
+          },
+        },
+        {
+          fill: {
+            gradient: {
+              start: { x: "85%", y: "25%" },
+              end: { x: "15%", y: "75%" },
+              colors: [
+                "red",
+                "orange",
+                "yellow",
+                "green",
+                "blue",
+                "indigo",
+                "purple",
+              ],
+            },
+          },
+        },
+      ],
     },
     {
       name: "shadows",
@@ -62,7 +92,7 @@ let avatar = {
       },
     },
     {
-      fill: "#fff",
+      fill: "#000",
     },
   ],
 };
