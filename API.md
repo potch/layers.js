@@ -102,7 +102,7 @@ Fill the canvas with a color.
 Filter layers apply a per-pixel transformation to the current canvas data.
 
 - `filter`: `String` | `Function` filter to apply.
-  - As a `String`, the name of a registered filter to apply. See [registerFilter](#registerFilter) for details.
+  - As a `String`, the name of a registered filter to apply. See [registerFilter](#registerfiltername-filterfunction) for details.
   - As a function, the filter function to apply. See [Filters](#filters) for details.
 - `filterOptions`: `Object` arguments to pass to the filter.
 
@@ -250,7 +250,7 @@ Utilities used internally by Layers.js and its filters that may be useful when a
 
 #### `getPixel(imageData, x, y)`
 
-Returns an Array of `[red, green, blue, alpha]` values for a given pixel of an ImageData object. Values are all of the form `0..255`, where 255 is fully opaque in the case of `alpha`. If the specified pixel is outside the bounds of `imageData`, returns `[0, 0, 0, 0`. Coordinates should be whole numbers. See [`samplePixel`](#samplepixel) to read color information "between" pixels.
+Returns an Array of `[red, green, blue, alpha]` values for a given pixel of an ImageData object. Values are all of the form `0..255`, where 255 is fully opaque in the case of `alpha`. If the specified pixel is outside the bounds of `imageData`, returns `[0, 0, 0, 0`. Coordinates should be whole numbers. See [`samplePixel`](#samplepixelimagedata-x-y) to read color information "between" pixels.
 
 * `imageData`, (required) `ImageData` object to pull pixel data from.
 * `x`: (required) `Number`, x coordinate of pixel.
