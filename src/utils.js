@@ -18,7 +18,7 @@ export function getPixel(id, x, y) {
 }
 
 // set pixel value at x/y of imagedata
-export function setPixel(id, x, y, r, g, b, a) {
+export function setPixel(id, x, y, r, g, b, a = 255) {
   let i = (y * id.width + x) * 4;
   id.data[i] = r;
   id.data[i + 1] = g;

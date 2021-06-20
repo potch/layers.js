@@ -516,7 +516,7 @@ var Layers = (function (exports) {
   }
 
   // set pixel value at x/y of imagedata
-  function setPixel(id, x, y, r, g, b, a) {
+  function setPixel(id, x, y, r, g, b, a = 255) {
     let i = (y * id.width + x) * 4;
     id.data[i] = r;
     id.data[i + 1] = g;

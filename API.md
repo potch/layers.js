@@ -4,7 +4,7 @@
 
 ### `render(stack[, options])`
 
-draws a canvas with the
+draws a canvas using the provided data:
 
 - `stack`: (required) [`<StackDescription>`](#stackdescription)
 - `options`:
@@ -51,6 +51,19 @@ An `Object` describing the contents of a layer.
       - if `width` is provided without height (or vice versa) the other value will be computed based on the aspect ratio of the image.
   - `anchor`: [`<Placement>`](#placement) describing the anchor point of the image. defaults to "center".
   - `position`: [`<Placement>`](#placement) describing the position of the anchor point within the layer. defaults to "center".
+
+Example:
+
+```js
+{
+  url: "https://example.com/test.png",
+  size: "50%",
+  position: {
+  	x: "50%",
+  	y: 0
+  }
+}
+```
 
 #### Text Layer
 
@@ -126,19 +139,40 @@ Description of a point on the canvas. Placements can be described absolutely, or
   - if either `x` or `y` is not provided, defaults to `center`
 - `center`, which is short for `{x: "center", y: "center"}`
 
+Examples of valid placements:
+
+```js
+{
+  position: "center",
+
+  /* ... */
+
+  position: {
+    x: "top",
+    y: "75%"
+  },
+
+  /* ... */
+
+  position: {
+    y: "bottom"
+  },
+}
+```
+
 
 ### Stack
 
-A helper class for managing `<StackDescription>` objects over multiple renders.
+A helper class for managing [`<StackDescription>`](#stackdescription) objects over multiple renders.
 
 #### constructor
 
 - `new Stack(stack[, options])`
 
-- `stack`: (required) `<StackDescription>`
+- `stack`: (required) [`<StackDescription>`](#stackdescription)
 - `options`:
-  - `canvas`: HTMLCanvas (browser) or Canvas (node). If provided, will automatically be passed to calls to `Stack.render()`.
-  - `container`: HTMLElement or String. If provided, will automatically be passed to calls to `Stack.render()`.
+  - `canvas`: `HTMLCanvasElement` (browser) or `Canvas` (node). If provided, will automatically be passed to calls to `Stack.render()`.
+  - `container`: `HTMLElement` or `String`. If provided, will automatically be passed to calls to `Stack.render()`.
 - Returns: new `Stack` instance.
 
 - `render([options])`
@@ -156,16 +190,88 @@ retrieves a specific layer from the stored `stack` by either index or `name`.
 
 ## Filters
 
-### filters
+### Built-in Filters
 
-### registerFilter
+### `registerFilter(name, filterFunction)`
+
+* `name`: (required) `String`, 
+* `filterFunction`: (required) `Function` of the form `function (imageData, options)`:
+	* `imageData`: [`ImageData`](https://developer.mozilla.org/en-US/docs/Web/API/ImageData) object containing the pixel data of the canvas representing the result of all the layers below the filter layer.
+	* `options`: any options used to configure the filter. These are passed from the [Filter layer definition](#filter-layer) object via the `filterOptions` property.
+	* `filterFunction` should return an `ImageData` object containing the new content of the canvas. This can be the same object passed in via the `imageData` parameter or a new `ImageData` object.
+
+**Example:**
+
+```js
+import { registerFilter } from 'layers.js';
+
+function myFilter(imageData, options) {
+  /* ... */
+}
+
+registerFilter('myfilter', myFilter);
+```
+
+#### Why register a filter?
+
+Filters can be selected in a [Filter layer](#filter-layer) by either providing a `Function` or a `String`. The string-based method is provided so `<StackDefinition>` objects can be serialized to JSON. All built-in filters are registered by default, and third-party filters can be imported and registered after the library is imported.
+
+Referring to the above example using `myFilter`, the following layer definitions would have the same output:
+
+```js
+// string
+{
+  filter: "myfilter",
+  filterOptions: {/*...*/}
+}
+
+// function, same effect
+{
+  filter: myFilter,
+  filterOptions: {/*...*/}
+}
+```
 
 ## Runtime
 
-### useCanvasEngine
+### `useCanvasEngine(engine)`
 
-### DOMCanvasEngine
+Change the internal canvas engine used by the library. Useful when not running in the main thread of a browser. The default canvas engine is [`DOMCanvasEngine`](#domcanvasengine).
+
+### `DOMCanvasEngine`
+
+TK
 
 ## Misc
 
 ### utils
+
+Utilities used internally by Layers.js and its filters that may be useful when authoring third-party filters or other interactions with the library.
+
+#### `getPixel(imageData, x, y)`
+
+Returns an Array of `[red, green, blue, alpha]` values for a given pixel of an ImageData object. Values are all of the form `0..255`, where 255 is fully opaque in the case of `alpha`. If the specified pixel is outside the bounds of `imageData`, returns `[0, 0, 0, 0`. Coordinates should be whole numbers. See [`samplePixel`](#samplepixel) to read color information "between" pixels.
+
+* `imageData`, (required) `ImageData` object to pull pixel data from.
+* `x`: (required) `Number`, x coordinate of pixel.
+* `y`: (required) `Number`, y coordinate of pixel.
+
+#### `setPixel(imageData, x, y, red, green, blue, alpha)`
+
+Sets a specified pixel of an `ImageData` object to the provided color values.
+
+* `imageData`, (required) `ImageData` object where the pixel will be set.
+* `x`: (required) `Number`, x coordinate of pixel.
+* `y`: (required) `Number`, y coordinate of pixel.
+* `red`: (required) `Number`, red value of pixel to set, from `0..255`.
+* `green`: (required) `Number`, green value of pixel to set, from `0..255`.
+* `blue`: (required) `Number`, blue value of pixel to set, from `0..255`.
+* `alpha`: `Number`, red value of pixel to set, from `0..255`. Defaults to `255`.
+
+#### `samplePixel(imageData, x, y)`
+
+Samples "between" pixels of an `ImageData` object, blending the surrounding pixels using bilinear interpolation. Returns an `Array` of `[red, green, blue, alpha]` values representing the samples color. Unlike `getPixel`, `x` and `y` values can be decimals.
+
+* `imageData`, (required) `ImageData` object to pull pixel data from.
+* `x`: (required) `Number`, x coordinate of pixel.
+* `y`: (required) `Number`, y coordinate of pixel.
